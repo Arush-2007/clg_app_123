@@ -1,0 +1,35 @@
+generator client {
+    provider     = "prisma-client-py"
+    output       = "../src/prisma_client"
+    interface    = "asyncio"
+}
+
+datasource db{
+    provider = "postgresql"
+    url      =  env("POSTGRESURL")
+}
+
+model User{
+    user_id     String  @id @unique
+    email       String  @unique
+    password    String
+    name        String
+    college     String
+    branch      String
+    year        Int
+}   
+
+model Event {
+  event_id          String   @id @default(uuid())
+  event_host        String
+  event_name       String
+  event_description    String
+  event_init_date        DateTime
+  event_end_date       DateTime
+  event_location    String
+  event_image_url   String
+  event_video_url    String
+  created_at   DateTime @default(now())
+}
+
+
