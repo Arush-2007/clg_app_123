@@ -33,10 +33,9 @@ async def update_event_profile(event_id: str, event_profile: UpdateEvent):
 @router.patch("/delete_event/{event_id}")
 async def delete_event(event_id: str):
     event = await event_user_service.delete_event(event_id)
-    if event:
+    if not event:
         return JSONResponse({
-            "message": "Event deleted",
-            "profile": event.model_dump()
+            "message": "Event deleted"
         })
     return JSONResponse({"message": "User not found"}, status_code=404)
 
@@ -49,8 +48,6 @@ async def upload_event_poster(event_id: str, poster: UploadFile = File(...)):
     poster_path = f"{uploads_dir}/{event_id}_{poster.filename}"
     with open(poster_path, "wb") as f:
         f.write(await poster.read())
-
-
 
     event = await event_user_service.upload_event_poster(event_id, poster_path)
 
@@ -76,8 +73,6 @@ async def upload_event_reel(event_id: str, reel: UploadFile = File(...)):
     reel_path = f"{uploads_dir}/{event_id}_{reel.filename}"
     with open(reel_path, "wb") as f:
         f.write(await reel.read())
-
-
 
     event = await event_user_service.upload_event_poster(event_id, reel_path)
 

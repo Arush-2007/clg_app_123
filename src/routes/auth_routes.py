@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from models.user import CreateUser, UpdateUser
 from services import auth
-from services.auth_service import UserAlreadyExistError, auth_service
+from services.auth_service import UserAlreadyExistError, auth_service, DifferentPasswordNeeded, UserNotFoundError, InvalidCredentialsError
 from uuid import uuid4
 from fastapi.responses import JSONResponse
 
@@ -13,33 +13,48 @@ async def status():
         "message": "user route is up"
     }
 
-@router.put("/")
+@router.put("/User_Auth")
 async def create_user(user: CreateUser):
     try:
         user_id = str(uuid4())
         dbuser = await auth.create_user(user_id, user)
 
         return JSONResponse({
-            "message": "User created",
-            "user": dbuser.model_dump()
+            "Success": "True",
+            "message": "User created"
         })
     except UserAlreadyExistError as e:
         return JSONResponse({
             "message": str(e)
         }, status_code=409)
     
-# Doubt yeh hh ki can I directly this UserAlreadyexistError for paasword as well rather than Email
 
-# @router.patch("/Update_Password")
-# async def update_paasword(user: UpdateUser):
-#     try:
-#         dbuser = await auth.update_user(user_id , user)
+@router.put("/Password_Update/{user_id}")
+async def update_user_endpoint(user: UpdateUser, user_id :str):
+    try:
+        dbuser = await auth.update_user(user_id, user)
 
-#         return JSONResponse({
-#             "message": "Paasword Updated",
-#             "user_details": dbuser.model_dump()
-#         })
-#     except UserAlreadyExistError as e:
-#         return JSONResponse({
-#             "message": str(e)
-#         }, status_code=409)    
+        return JSONResponse({
+            "Success": "True",
+            "message": "User passwoed updated"
+        })
+    except DifferentPasswordNeeded as e:
+        return JSONResponse({
+            "message" : str(e)
+        }, status_code=409)
+    
+
+@router.put("/User_Log_in")
+async def user_login_endpoint(user_log_r : CreateUser):
+    try:
+        result = await auth.login_user_detailed(user_log_r)
+        if result == True:
+            return JSONResponse({
+                "is_login_valid" : "Yes"
+            })
+        
+    except (UserNotFoundError, InvalidCredentialsError) as e:
+        return JSONResponse({
+            "message": str(e)
+        }, status_code=401)
+

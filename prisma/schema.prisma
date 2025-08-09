@@ -32,4 +32,28 @@ model Event {
   created_at   DateTime @default(now())
 }
 
+model College{
+    college_name    String @id @unique
+    clubs_recognized  Int
+}
 
+model Club {
+    parent_college  String
+    club_id   String @id @default(uuid())
+    c_id  String
+    club_name    String
+    club_admin   String
+    club_admin_email   String @unique
+    members    Int
+    description   String
+    created_at   DateTime @default(now())
+    position    Position[] 
+}
+
+model Position{
+    club   Club   @relation(fields: [club_id], references: [id])
+    club_id    String 
+
+    hierarchy   Int
+    position_name  String
+}
