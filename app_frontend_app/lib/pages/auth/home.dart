@@ -1,32 +1,40 @@
 import 'package:college_app/services/ui_services/list_builder.dart';
+import 'package:college_app/pages/auth/chat.dart';
+import 'package:college_app/services/events_api.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:college_app/theme/animated_container.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<Map<String, List<Map<String, String>>>> _eventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsFuture = _loadEvents();
+  }
+
+  Future<Map<String, List<Map<String, String>>>> _loadEvents() async {
+    final api = EventsApi();
+    final ongoing = await api.fetchEvents(status: "ongoing");
+    final upcoming = await api.fetchEvents(status: "upcoming");
+    return {
+      "ongoing": ongoing,
+      "upcoming": upcoming,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    final List<Map<String, String>> ongoingEvents = [
-      {
-        'title': 'Event 1',
-        'imageURL': 'assets/images/testing/xyz.gif',
-      },
-      {
-        'title': 'Event 2',
-        'imageURL': 'assets/images/testing/xyz.gif',
-      },
-      {
-        'title': 'Event 3',
-        'imageURL': 'assets/images/testing/xyz.gif',
-      },
-    ];
-
-    final List<Map<String, String>> upcomingEvents = [];
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -150,8 +158,11 @@ class HomeScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: GestureDetector(
-                      //TODO: Implement Navigation to Chat AI Screen
-                      //onTap: 
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ChatScreen()),
+                        );
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                         decoration: BoxDecoration(
@@ -196,29 +207,43 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 36),
 
-                  /// 📌 Ongoing Events
-                  _buildEventSection(
-                    context,
-                    'Ongoing Events',
-                    ongoingEvents,
-                    Icons.play_circle_fill_rounded,
-                    colorScheme,
-                    isDarkMode,
+                  FutureBuilder<Map<String, List<Map<String, String>>>>(
+                    future: _eventsFuture,
+                    builder: (context, snapshot) {
+                      final ongoingEvents = snapshot.data?["ongoing"] ?? [];
+                      final upcomingEvents = snapshot.data?["upcoming"] ?? [];
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          _buildEventSection(
+                            context,
+                            'Ongoing Events',
+                            ongoingEvents,
+                            Icons.play_circle_fill_rounded,
+                            colorScheme,
+                            isDarkMode,
+                          ),
+                          const SizedBox(height: 28),
+                          _buildEventSection(
+                            context,
+                            'Upcoming Events',
+                            upcomingEvents,
+                            Icons.schedule,
+                            colorScheme,
+                            isDarkMode,
+                          ),
+                          const SizedBox(height: 28),
+                        ],
+                      );
+                    },
                   ),
-
-                  const SizedBox(height: 28),
-
-                  /// 📆 Upcoming Events
-                  _buildEventSection(
-                    context,
-                    'Upcoming Events',
-                    upcomingEvents,
-                    Icons.schedule,
-                    colorScheme,
-                    isDarkMode,
-                  ),
-
-                  const SizedBox(height: 28),
                 ],
               ),
             ),

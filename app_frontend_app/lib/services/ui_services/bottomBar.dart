@@ -4,20 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 //TODO :add function -  Await for user data to be fetched before showing the home screen
 class Bottombar extends StatefulWidget {
-  const Bottombar({super.key});
+  final int initialIndex;
+
+  const Bottombar({super.key, this.initialIndex = 0});
 
   @override
   State<Bottombar> createState() => _BottombarState();
 }
 
-int currentIndex = 0;
-
-final List<Widget> pages = [
-  HomeScreen(),
-  ChatScreen(),
-];
-
 class _BottombarState extends State<Bottombar> {
+  late int currentIndex;
+  late final List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex;
+    pages = const [
+      HomeScreen(),
+      ChatScreen(),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;

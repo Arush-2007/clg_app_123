@@ -1,0 +1,7 @@
+[run]
+omit =
+    src/routes/__init__.py
+
+[report]
+skip_covered = True
+show_missing = True

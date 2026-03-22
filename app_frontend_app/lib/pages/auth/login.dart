@@ -1,3 +1,4 @@
+import 'package:college_app/pages/auth/auth_gate.dart';
 import 'package:college_app/pages/auth/signup.dart';
 import 'package:college_app/services/auth_methods.dart';
 import 'package:flutter/material.dart';
@@ -163,10 +164,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (email.isNotEmpty && password.isNotEmpty) {
                             // Call your login method here
                             final signInResult = await AuthMethods().signInUserWithEmail(email: email, password: password);
-                            if (signInResult.message == "Login successful and token synced with backend.") {
+                            if (signInResult.isBackendSynced) {
                               // ignore: use_build_context_synchronously
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(signInResult.message)),
+                              );
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const AuthGate()),
                               );
                             } else {
                               // ignore: use_build_context_synchronously
@@ -231,7 +235,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               border: Border.all(color: colorScheme.primary, width: 2),
                               borderRadius: BorderRadius.circular(50),
                             ),
-                            child: Image.asset("assets/icons/google.png"),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(50),
+                              onTap: () async {
+                                final signInResult = await AuthMethods().signUpUserWithGoogle();
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(signInResult.message)),
+                                );
+                                if (signInResult.isBackendSynced) {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(builder: (_) => const AuthGate()),
+                                  );
+                                }
+                              },
+                              child: Image.asset("assets/icons/google.png"),
+                            ),
                           ),
                           //TODO: Add in production stage
                           /*

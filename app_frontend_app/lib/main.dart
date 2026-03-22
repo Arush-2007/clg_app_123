@@ -1,11 +1,14 @@
-import 'package:college_app/services/ui_services/bottomBar.dart';
+import 'package:college_app/pages/auth/auth_gate.dart';
 import 'package:college_app/theme/theme.dart';
+import 'package:college_app/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -19,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: lightMode,
       darkTheme: darkMode,
       debugShowCheckedModeBanner: false,
-      home: Bottombar(), // Change to HomeScreen() after setup
+      home: const AuthGate(),
     );
   }
 }

@@ -130,6 +130,16 @@ class _ListBuilderWidgetState extends State<ListBuilderWidget> {
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                                 height: double.infinity,
+                                errorBuilder: (_, __, ___) => Image.network(
+                                  imageURL,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (_, __, ___) => const ColoredBox(
+                                    color: Colors.black12,
+                                    child: Center(child: Icon(Icons.image_not_supported)),
+                                  ),
+                                ),
                               ),
                               Positioned(
                                 bottom: 0,

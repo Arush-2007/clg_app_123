@@ -1,20 +1,22 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+
 
 class CreateEvent(BaseModel):
-    event_name     :  str
-    event_host  :   str
-    event_description  :  str
-    event_init_date     :   datetime
-    event_end_date     :  datetime
-    event_location :   str
+    title: str = Field(min_length=2, max_length=120)
+    image_url: HttpUrl
+    status: Literal["ongoing", "upcoming"]
+    starts_at: Optional[datetime] = None
 
 
-class UpdateEvent(BaseModel):
-    event_name     :  Optional[str]
-    event_host     :  Optional[str]
-    event_description  :  Optional[str]
-    event_init_date     :  Optional[datetime]
-    event_end_date     :  Optional[datetime]
-    event_location :   Optional[str]
+class EventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    event_id: int
+    title: str
+    image_url: str
+    status: str
+    starts_at: Optional[datetime]
+    created_at: datetime

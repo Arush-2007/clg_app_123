@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:college_app/config/api_config.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,16 +9,28 @@ import 'package:http/http.dart' as http;
 class SignUpResult {
   final String message;
   final String? token;
+  final bool isBackendSynced;
+  final bool isAccountCreated;
 
-  SignUpResult({required this.message, this.token});
+  SignUpResult({
+    required this.message,
+    this.token,
+    this.isBackendSynced = false,
+    this.isAccountCreated = false,
+  });
 }
 
 /// A class to handle user token and sign-in results
 class SignInResult {
   final String message;
   final String? token;
+  final bool isBackendSynced;
 
-  SignInResult({required this.message, this.token});
+  SignInResult({
+    required this.message,
+    this.token,
+    this.isBackendSynced = false,
+  });
 }
 
 
@@ -26,8 +39,38 @@ class AuthMethods {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  //TODO: attach end point here
-  final String backendUrl = 'https://yourapi.com/users/';
+  Future<bool> _syncUserWithBackend({
+    required String token,
+    required String email,
+    required String source,
+  }) async {
+    final response = await http
+        .post(
+          ApiConfig.endpoint('/users'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'email': email,
+            'source': source,
+          }),
+        )
+        .timeout(const Duration(seconds: 12));
+    return response.statusCode == 200;
+  }
+
+  Future<bool> hasProfile({required String token}) async {
+    final response = await http
+        .get(
+          ApiConfig.endpoint('/profiles/me'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 10));
+    return response.statusCode == 200;
+  }
 
   // Sign up with Email and Password
   Future<SignUpResult> signUpUserWithEmail({
@@ -36,6 +79,8 @@ class AuthMethods {
 }) async {
   String res = "Some error occurred";
   String? token;
+  bool synced = false;
+  bool accountCreated = false;
 
   try {
     if (email.isNotEmpty && password.isNotEmpty) {
@@ -43,24 +88,18 @@ class AuthMethods {
         email: email,
         password: password,
       );
+      accountCreated = true;
 
       await cred.user?.sendEmailVerification();
       token = await cred.user?.getIdToken();
 
       if (token != null) {
-        final response = await http.post(
-          Uri.parse(backendUrl),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'email': email,
-            'source': 'email-password',
-          }),
+        synced = await _syncUserWithBackend(
+          token: token,
+          email: email,
+          source: 'email-password',
         );
-
-        if (response.statusCode == 200) {
+        if (synced) {
           res = "User created, verification email sent, and user synced with backend.";
         } else {
           res = "User created & email sent, but backend rejected token.";
@@ -89,7 +128,12 @@ class AuthMethods {
     res = "Something went wrong. Please try again.";
   }
 
-  return SignUpResult(message: res, token: token);
+  return SignUpResult(
+    message: res,
+    token: token,
+    isBackendSynced: synced,
+    isAccountCreated: accountCreated,
+  );
 }
 
 
@@ -100,6 +144,7 @@ class AuthMethods {
 }) async {
   String res = "Some error occurred";
   String? token;
+  bool synced = false;
 
   try {
     UserCredential userCred = await _auth.signInWithEmailAndPassword(
@@ -110,20 +155,12 @@ class AuthMethods {
     if (userCred.user != null && userCred.user!.emailVerified) {
       token = await userCred.user!.getIdToken();
 
-      // 🔁 Push token to backend
-      final response = await http.post(
-        Uri.parse(backendUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'source': 'email-password',
-        }),
+      synced = await _syncUserWithBackend(
+        token: token!,
+        email: email,
+        source: 'email-password',
       );
-
-      if (response.statusCode == 200) {
+      if (synced) {
         res = "Login successful and token synced with backend.";
       } else {
         res = "Login successful but backend rejected the token.";
@@ -137,7 +174,7 @@ class AuthMethods {
     res = "Login failed. Try again.";
   }
 
-  return SignInResult(message: res, token: token);
+  return SignInResult(message: res, token: token, isBackendSynced: synced);
 }
 
 
@@ -146,6 +183,7 @@ class AuthMethods {
   Future<SignUpResult> signUpUserWithGoogle() async {
   String res = "Some error occurred";
   String? token;
+  bool synced = false;
 
   try {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -164,19 +202,12 @@ class AuthMethods {
     token = await userCredential.user?.getIdToken();
 
     if (token != null) {
-      final response = await http.post(
-        Uri.parse(backendUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': userCredential.user?.email ?? '',
-          'source': 'google-signin',
-        }),
+      synced = await _syncUserWithBackend(
+        token: token,
+        email: userCredential.user?.email ?? '',
+        source: 'google-signin',
       );
-
-      if (response.statusCode == 200) {
+      if (synced) {
         res = "Google sign-in success and user synced with backend.";
       } else {
         res = "Google sign-in success, but backend rejected the token.";
@@ -188,7 +219,12 @@ class AuthMethods {
     res = "Google Sign-In failed: ${e.toString()}";
   }
 
-  return SignUpResult(message: res, token: token);
+  return SignUpResult(
+    message: res,
+    token: token,
+    isBackendSynced: synced,
+    isAccountCreated: token != null,
+  );
 }
 
 

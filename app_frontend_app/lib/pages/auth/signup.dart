@@ -1,4 +1,5 @@
 import 'package:college_app/pages/auth/login_post_email.dart';
+import 'package:college_app/pages/auth/login.dart';
 import 'package:college_app/services/auth_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -52,7 +53,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           password: password,
         );
 
-        if (result.message.contains("User created")) {
+        if (result.isAccountCreated) {
           showSnackBar('Account created! Please verify your email.');
           Future.delayed(const Duration(seconds: 2), () {
             Navigator.pushReplacement(
@@ -173,7 +174,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: GoogleFonts.poppins(color: colors.onSurface)),
                   GestureDetector(
                     onTap: () {
-                      // TODO: Navigate to login screen
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
                     },
                     child: Text("Login",
                         style: GoogleFonts.poppins(

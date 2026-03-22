@@ -1,37 +1,34 @@
-from src.models import User
-from models.user import Set_Up_Profile, Update_Profile
-from utils.prisma import db
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from src.db.entities import UserEntity
+from src.models.users import UpsertUserRequest
+
 
 class UserService:
-    def __init__(self):
-        pass
+    def upsert_user(self, db: Session, firebase_uid: str, payload: UpsertUserRequest) -> UserEntity:
+        entity = db.scalar(select(UserEntity).where(UserEntity.firebase_uid == firebase_uid))
+        if not entity:
+            entity = db.scalar(select(UserEntity).where(UserEntity.email == payload.email))
 
-    async def create_profile(self, user_id: str, User_Profile: Set_Up_Profile):
-        return await db.user.update(data={
-            "name": User_Profile.name,
-            "college": User_Profile.college,
-            "year": User_Profile.year,
-            "branch": User_Profile.branch
-        }, where={"user_id": user_id})
+        if entity:
+            entity.email = str(payload.email)
+            entity.source = payload.source
+            entity.firebase_uid = firebase_uid
+        else:
+            entity = UserEntity(
+                firebase_uid=firebase_uid,
+                email=str(payload.email),
+                source=payload.source,
+            )
+            db.add(entity)
 
-    async def update_profile(self, user_id: str, User_Profile: Update_Profile):
-        finalised_profile = User_Profile.model_dump(exclude_unset=True, exclude_none=True)
-        return await db.user.update(data=finalised_profile, where={"user_id": user_id})
+        db.commit()
+        db.refresh(entity)
+        return entity
 
-    async def delete_profile(self, user_id: str):
-        return await db.user.update(data={
-            "name": None,
-            "college": None,
-            "year": None,
-            "branch": None
-        }, where={"user_id": user_id})
-    
-
-    async def upload_profile_picture(self, user_id: str, image_url: str):
-        return await db.user.update(
-           data={"image_url": image_url},
-           where={"user_id": user_id}
-    )
+    def get_user_by_uid(self, db: Session, firebase_uid: str) -> UserEntity | None:
+        return db.scalar(select(UserEntity).where(UserEntity.firebase_uid == firebase_uid))
 
 
 user_service = UserService()

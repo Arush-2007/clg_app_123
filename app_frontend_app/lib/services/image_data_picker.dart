@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:college_app/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,11 +27,9 @@ class ImageAndDataUploader {
     }
   }
 
-  /// Uploads selected image to the given endpoint with additional form fields
-  Future<http.StreamedResponse?> uploadImageToAPI({
-    required String endpoint,
-    required Map<String, String> fields,
+  Future<String?> uploadImage({
     required BuildContext context,
+    required String token,
   }) async {
     if (selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -41,8 +41,9 @@ class ImageAndDataUploader {
       return null;
     }
 
-    final uri = Uri.parse(endpoint);
+    final uri = ApiConfig.endpoint('/media/upload');
     final request = http.MultipartRequest("POST", uri);
+    request.headers["Authorization"] = "Bearer $token";
 
     final mimeType = lookupMimeType(selectedImage!.path);
     final imageFile = await http.MultipartFile.fromPath(
@@ -52,11 +53,14 @@ class ImageAndDataUploader {
     );
 
     request.files.add(imageFile);
-    request.fields.addAll(fields);
-
     try {
       final response = await request.send();
-      return response;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final body = await response.stream.bytesToString();
+        final decoded = jsonDecode(body.isEmpty ? '{}' : body);
+        return decoded['imageUrl']?.toString();
+      }
+      return null;
     } catch (e) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,5 +68,19 @@ class ImageAndDataUploader {
       );
       return null;
     }
+  }
+
+  Future<http.Response> submitProfile({
+    required String token,
+    required Map<String, dynamic> body,
+  }) {
+    return http.post(
+      ApiConfig.endpoint('/profiles/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    ).timeout(const Duration(seconds: 12));
   }
 }

@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: ./app_backend
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: development
+      DATABASE_URL: sqlite:///./college_app.db
+      API_PREFIX: /api/v1
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:8080"]'
+      RATE_LIMIT_PER_MINUTE: 120
+      UPLOAD_DIR: uploads
+    volumes:
+      - ./app_backend/uploads:/app/uploads
+      - ./app_backend/college_app.db:/app/college_app.db

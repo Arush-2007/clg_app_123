@@ -1,4 +1,5 @@
 import 'package:college_app/services/location.dart';
+import 'package:college_app/services/ui_services/bottomBar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,52 +75,48 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     setState(() => isLoading = true);
 
-     //attaching location to profile
+    // attaching location to profile
     try {
-    location = await Location().getCoordinatesAndSave();
-
-  if (location.containsKey('error')) {
-    _showSnackBar(location['error']!, isError: true);
-    return;
-  }
+      location = await Location().getCoordinatesAndSave();
+      if (location.containsKey('error')) {
+        _showSnackBar(location['error']!, isError: true);
+        setState(() => isLoading = false);
+        return;
+      }
     } catch (e) {
       _showSnackBar("Error fetching location: $e", isError: true);
+      setState(() => isLoading = false);
       return;
     }
   
+
+    final token = await user.getIdToken();
+    if (token == null) {
+      setState(() => isLoading = false);
+      _showSnackBar("Failed to fetch auth token.", isError: true);
+      return;
+    }
 
     String imageUrl = defaultAvatarUrl;
 
     // Upload image first (if selected)
     if (uploader.selectedImage != null) {
-      final imageResponse = await uploader.uploadImageToAPI(
-        //TODO: Replace with Image collectionn api that returns image URL
-        endpoint: 'https://your.api/upload-image',
-        // ignore: use_build_context_synchronously
+      final uploadedUrl = await uploader.uploadImage(
         context: context,
-        fields: {}, // yaha koi field ki zaroorat nahi hai, just image upload karna hai, image response se URL milega
+        token: token,
       );
 
-      if (imageResponse == null || imageResponse.statusCode != 200) {
+      if (uploadedUrl == null || uploadedUrl.isEmpty) {
         setState(() => isLoading = false);
         _showSnackBar("Image upload failed.", isError: true);
         return;
       }
-
-      // Extract image URL from response
-      final responseBody = await imageResponse.stream.bytesToString();//image response se body le lo and we get the URL
-      final decoded = jsonDecode(responseBody);
-      imageUrl = decoded['imageUrl'] ?? defaultAvatarUrl;
+      imageUrl = uploadedUrl;
     }
 
-    // Submit full profile with image URL
-    final profileResponse = await uploader.uploadImageToAPI(
-      //TODO: Replace with Profile submission API
-      endpoint: 'https://your.api/submit-profile',
-      // ignore: use_build_context_synchronously
-      context: context,
-      fields: {
-        "userID": user.uid,
+    final profileResponse = await uploader.submitProfile(
+      token: token,
+      body: {
         "name": _nameController.text.trim(),
         "college": selectedCollege!,
         "year_of_graduation": selectedYear!,
@@ -127,16 +124,27 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         "avatar_url": imageUrl,
         "latitude": location['latitude'] ?? "Not specified",
         "longitude": location['longitude'] ?? "Not specified",
-      },
+      }
     );
 
     setState(() => isLoading = false);
 
-    if (profileResponse != null && profileResponse.statusCode == 200) {
+    if (profileResponse.statusCode == 200) {
       _showSnackBar("Profile uploaded successfully!", isError: false);
-      // TODO: Navigate to next screen
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const Bottombar()),
+        (route) => false,
+      );
     } else {
-      _showSnackBar("Upload failed: ${profileResponse?.statusCode ?? 'unknown'}", isError: true);
+      String message = "Upload failed: ${profileResponse.statusCode}";
+      try {
+        final decoded = jsonDecode(profileResponse.body);
+        if (decoded is Map && decoded["detail"] != null) {
+          message = "Upload failed: ${decoded["detail"]}";
+        }
+      } catch (_) {}
+      _showSnackBar(message, isError: true);
     }
   }
 

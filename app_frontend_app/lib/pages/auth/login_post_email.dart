@@ -1,3 +1,4 @@
+import 'package:college_app/pages/auth/profile_setup.dart';
 import 'package:college_app/pages/auth/signup.dart';
 import 'package:college_app/services/auth_methods.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +41,8 @@ class _LoginPostScreenState extends State<LoginPostScreen> {
     setState(() => isLoading = true);
 
     try {
-      await AuthMethods().resendVerificationEmail();
-      showSnackBar("Verification email sent. Please check your inbox.");
+      final message = await AuthMethods().resendVerificationEmail();
+      showSnackBar(message);
     } catch (e) {
       showSnackBar("Failed to send email: $e");
     }
@@ -68,13 +69,10 @@ class _LoginPostScreenState extends State<LoginPostScreen> {
 
     showSnackBar(result.message);
 
-    if (result.token != null) {
-      //TODO: Handle successful login of new user,navigate to profile setup screen.
-      /*
+    if (result.isBackendSynced) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const ProfileSetupScreen()),
       );
-      */
     }
   } catch (e) {
     showSnackBar("Login failed: ${e.toString()}");
