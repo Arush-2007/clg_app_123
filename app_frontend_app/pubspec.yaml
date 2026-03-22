@@ -1,0 +1,41 @@
+name: college_app
+description: A new Flutter project.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  firebase_auth: ^5.6.2
+  firebase_core: ^3.15.1
+  flutter:
+    sdk: flutter
+  geocoding: ^4.0.0
+  geolocator: ^14.0.2
+  curved_navigation_bar: ^1.0.6
+  google_fonts: ^6.2.1
+  google_sign_in: ^6.1.4
+  http: ^1.4.0
+  http_parser: ^4.1.2
+  image_picker: ^1.1.2
+  lottie: ^3.3.1
+  mime: ^2.0.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/lottie/login.json
+    - assets/icons/facebook.png
+    - assets/icons/google.png
+    - assets/lottie/welcome.json
+    - assets/lottie/cat.json
+    - assets/images/testing/xyz.gif
