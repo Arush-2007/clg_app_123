@@ -1,7 +1,30 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
 .pytest_cache/
-.venv/
+.ruff_cache/
+*.egg-info/
+
+# Environment — never bake secrets into image
 .env
+.env.*
+
+# Dev/test files — not needed in production image
+tests/
+*.log
+debug-*.log
+
+# Local uploads — served from GCS in production
 uploads/
-college_app.db
+
+# Alembic compiled files
+alembic/versions/*.pyc
+
+# Git
+.git/
+.gitignore
+
+# Docker itself
+Dockerfile
+.dockerignore

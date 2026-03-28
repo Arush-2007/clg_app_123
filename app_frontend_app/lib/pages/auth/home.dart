@@ -1,8 +1,13 @@
+import 'dart:convert';
+
+import 'package:college_app/config/api_config.dart';
 import 'package:college_app/services/ui_services/list_builder.dart';
 import 'package:college_app/pages/auth/chat.dart';
 import 'package:college_app/services/events_api.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:college_app/theme/animated_container.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,11 +19,36 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<Map<String, List<Map<String, String>>>> _eventsFuture;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
     _eventsFuture = _loadEvents();
+    _loadUserName();
+  }
+
+  Future _loadUserName() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      final token = await user.getIdToken();
+      final response = await http.get(
+        ApiConfig.endpoint('/profiles/me'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final name = data['name'] ?? data['full_name'] ?? '';
+        if (name.isNotEmpty && mounted) {
+          setState(() {
+            _userName = name.toString().split(' ').first;
+          });
+        }
+      }
+    } catch (_) {
+      // silently fail — greeting just stays empty
+    }
   }
 
   Future<Map<String, List<Map<String, String>>>> _loadEvents() async {
@@ -98,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Row(
                                         children: [
                                           Text(
-                                            'Hey, User!',
+                                            _userName.isEmpty ? 'Hey there!' : 'Hey, $_userName!',
                                             style: GoogleFonts.poppins(
                                               fontSize: 20,
                                               fontWeight: FontWeight.w700,

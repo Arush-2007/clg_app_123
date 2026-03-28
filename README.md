@@ -9,6 +9,13 @@ This repository contains:
 
 ### Backend
 
+0. (Recommended) Create and activate a virtual environment:
+   - Windows PowerShell:
+     - `python -m venv app_backend/.venv`
+     - `.\app_backend\.venv\Scripts\Activate.ps1`
+   - macOS/Linux:
+     - `python3 -m venv app_backend/.venv`
+     - `source app_backend/.venv/bin/activate`
 1. Copy `app_backend/.env.example` to `app_backend/.env`.
 2. Install dependencies:
    - `pip install -r app_backend/requirements.txt`
@@ -20,6 +27,7 @@ This repository contains:
 Notes:
 - Keep `AUTO_CREATE_SCHEMA=false` in non-dev environments.
 - Keep `PROTECT_METRICS=true` in non-dev environments.
+- If you use a venv, reactivate it in each new terminal before running backend commands.
 
 ### Frontend
 

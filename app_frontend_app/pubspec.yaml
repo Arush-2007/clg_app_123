@@ -16,7 +16,7 @@ dependencies:
   geocoding: ^4.0.0
   geolocator: ^14.0.2
   curved_navigation_bar: ^1.0.6
-  google_fonts: ^6.2.1
+  google_fonts: ^8.0.2
   google_sign_in: ^6.1.4
   http: ^1.4.0
   http_parser: ^4.1.2

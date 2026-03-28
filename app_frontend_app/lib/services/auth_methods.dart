@@ -255,4 +255,25 @@ Future<String> resendVerificationEmail() async {
   }
 }
 
+Future sendPasswordResetEmail({required String email}) async {
+  try {
+    if (email.isEmpty) {
+      return "Please enter your email address.";
+    }
+    await _auth.sendPasswordResetEmail(email: email.trim());
+    return "Password reset email sent. Check your inbox.";
+  } on FirebaseAuthException catch (e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return "No account found with this email.";
+      case 'invalid-email':
+        return "Please enter a valid email address.";
+      default:
+        return e.message ?? "Failed to send reset email.";
+    }
+  } catch (e) {
+    return "Something went wrong. Please try again.";
+  }
+}
+
 }

@@ -141,7 +141,58 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Forgot password logic
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                final emailController = TextEditingController();
+                                return AlertDialog(
+                                  title: Text(
+                                    'Reset Password',
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Enter your email and we will send you a reset link.',
+                                        style: GoogleFonts.poppins(fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextField(
+                                        controller: emailController,
+                                        keyboardType: TextInputType.emailAddress,
+                                        decoration: InputDecoration(
+                                          hintText: 'Email address',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text('Cancel', style: GoogleFonts.poppins()),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        final navigator = Navigator.of(context);
+                                        final messenger = ScaffoldMessenger.of(context);
+                                        final result = await AuthMethods().sendPasswordResetEmail(
+                                          email: emailController.text,
+                                        );
+                                        navigator.pop();
+                                        messenger.showSnackBar(
+                                          SnackBar(content: Text(result)),
+                                        );
+                                      },
+                                      child: Text('Send Reset Link', style: GoogleFonts.poppins()),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
                           },
                           child: Text(
                             "Forgot Password?",

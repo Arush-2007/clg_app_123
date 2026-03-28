@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -10,6 +11,8 @@ SESSION_ID = "4c90a2"
 
 
 def debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict) -> None:
+    if os.environ.get("APP_ENV", "development") == "production":
+        return
     payload = {
         "sessionId": SESSION_ID,
         "id": f"log_{int(time.time() * 1000)}_{uuid4().hex[:8]}",

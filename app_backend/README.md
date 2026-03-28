@@ -9,10 +9,19 @@
 
 ## Setup
 
+0. (Recommended) Create and activate a virtual environment before installing deps:
+   - Windows PowerShell:
+     - `python -m venv .venv`
+     - `.\.venv\Scripts\Activate.ps1`
+   - macOS/Linux:
+     - `python3 -m venv .venv`
+     - `source .venv/bin/activate`
 1. `cp .env.example .env`
 2. `pip install -r requirements.txt`
 3. `alembic upgrade head`
 4. `uvicorn src.main:app --reload`
+
+If your prompt shows `(.venv)`, packages install into this project environment only.
 
 ## Important Runtime Flags
 

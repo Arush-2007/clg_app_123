@@ -23,7 +23,7 @@ def upgrade() -> None:
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),
         sa.Column("email", sa.String(length=320), nullable=False),
         sa.Column("source", sa.String(length=64), nullable=False, server_default="email-password"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
     )

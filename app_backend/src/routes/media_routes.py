@@ -1,14 +1,9 @@
-from pathlib import Path
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-
-from src.core.config import get_settings
 from src.core.security import verify_firebase_token
+from src.services.storage_service import upload_file, _get_provider
 
 router = APIRouter(prefix="/media", tags=["media"])
-_BASE_DIR = Path(__file__).resolve().parents[2]
-UPLOAD_DIR = _BASE_DIR / get_settings().upload_dir
+
 MAX_SIZE_BYTES = 5 * 1024 * 1024
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
@@ -26,15 +21,24 @@ async def upload_image(
     if len(data) > MAX_SIZE_BYTES:
         raise HTTPException(status_code=400, detail="Image must be <= 5MB")
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    ext = Path(image.filename or "upload").suffix or ".jpg"
-    safe_name = f"{uuid4().hex}{ext.lower()}"
-    file_path = UPLOAD_DIR / safe_name
-    file_path.write_bytes(data)
+    try:
+        result = await upload_file(
+            file_bytes=data,
+            original_filename=image.filename or "upload.jpg",
+            content_type=image.content_type,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    base_url = str(request.base_url).rstrip("/")
+    # For local provider, result is just the filename — build the full URL
+    if _get_provider() == "local":
+        base_url = str(request.base_url).rstrip("/")
+        image_url = f"{base_url}/uploads/{result}"
+    else:
+        image_url = result  # GCS returns full public URL directly
+
     return {
-        "imageUrl": f"{base_url}/uploads/{safe_name}",
+        "imageUrl": image_url,
         "sizeBytes": len(data),
         "contentType": image.content_type,
     }
