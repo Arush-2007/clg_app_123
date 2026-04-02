@@ -9,13 +9,13 @@ plugins {
 
 android {
     namespace = "com.classified.college_app"
-    compileSdk = 35 // 🔧 Use a fixed version instead of flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = "27.0.12077973" // 🔧 Required by Firebase
 
     defaultConfig {
         applicationId = "com.classified.college_app"
-        minSdk = 23 // ✅ Firebase requires minSdk >= 23
-        targetSdk = 35
+        minSdk = 24
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
     }
