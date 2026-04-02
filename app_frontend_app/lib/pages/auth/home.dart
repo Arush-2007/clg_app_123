@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:college_app/config/api_config.dart';
+import 'package:college_app/pages/home/debug_bar.dart';
+import 'package:college_app/services/auth_methods.dart';
 import 'package:college_app/services/ui_services/list_builder.dart';
 import 'package:college_app/pages/auth/chat.dart';
 import 'package:college_app/services/events_api.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -18,14 +22,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static Map<String, List<Map<String, String>>>? _cachedEvents;
+  static DateTime? _cacheTime;
+
   late Future<Map<String, List<Map<String, String>>>> _eventsFuture;
   String _userName = '';
+  Timer? _tokenRefreshTimer;
 
   @override
   void initState() {
     super.initState();
+    AuthMethods.printIdToken();
+    _tokenRefreshTimer = Timer.periodic(const Duration(minutes: 55), (_) {
+      AuthMethods.printIdToken();
+    });
     _eventsFuture = _loadEvents();
     _loadUserName();
+  }
+
+  @override
+  void dispose() {
+    _tokenRefreshTimer?.cancel();
+    super.dispose();
   }
 
   Future _loadUserName() async {
@@ -52,13 +70,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<Map<String, List<Map<String, String>>>> _loadEvents() async {
+    if (_cachedEvents != null &&
+        _cacheTime != null &&
+        DateTime.now().difference(_cacheTime!) < const Duration(minutes: 5)) {
+      return _cachedEvents!;
+    }
     final api = EventsApi();
     final ongoing = await api.fetchEvents(status: "ongoing");
     final upcoming = await api.fetchEvents(status: "upcoming");
-    return {
-      "ongoing": ongoing,
-      "upcoming": upcoming,
-    };
+    _cachedEvents = {"ongoing": ongoing, "upcoming": upcoming};
+    _cacheTime = DateTime.now();
+    return _cachedEvents!;
   }
 
   @override
@@ -81,6 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (kDebugMode) const DebugBar(),
+
                   /// 🔥 Gradient Header
                   Container(
                     margin: const EdgeInsets.all(24),
@@ -190,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ChatScreen()),
+                          MaterialPageRoute(builder: (_) => const ChatScreen(conversationId: 0, conversationName: 'Chippo AI')),
                         );
                       },
                       child: Container(

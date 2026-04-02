@@ -18,7 +18,10 @@ class ClubDoesNotExistError(Exception):
 class ClubService:
     @staticmethod
     def _build_cid(parent_college: str, club_name: str) -> str:
-        return f"{club_name.strip().lower()}_{parent_college.strip().lower()}"
+        return (
+            f"{club_name.strip().lower().replace(' ', '_')}"
+            f"_{parent_college.strip().lower().replace(' ', '_')}"
+        )
 
     def register_club(self, db: Session, club: RegisterClub) -> ClubEntity:
         c_id = self._build_cid(club.parent_college, club.club_name)

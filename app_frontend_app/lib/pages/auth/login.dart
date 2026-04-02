@@ -45,10 +45,12 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                height: 320,
+                width: 280,
+                height: 280,
                 child: Lottie.asset(
                   "assets/lottie/login.json",
                   fit: BoxFit.contain,
+                  repeat: true,
                 ),
               ),
               Text(

@@ -1,4 +1,5 @@
 import os
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -15,7 +16,10 @@ from src.core.middleware import (
     RequestContextMiddleware,
     SecurityHeadersMiddleware,
 )
+from src.routes.admins_routes import router as admins_router
+from src.routes.chat_routes import router as chat_router
 from src.routes.clubs_routes import router as clubs_router
+from src.routes.ws_routes import router as ws_router
 from src.routes.events_routes import router as events_router
 from src.routes.media_routes import router as media_router
 from src.routes.positions_routes import router as positions_router
@@ -49,9 +53,31 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+def _build_cors_origins(settings) -> list[str]:
+    origins = list(settings.cors_origins)
+    if settings.cors_allow_all_localhost:
+        # Allow any localhost/127.0.0.1 port in dev — never blocks Flutter web
+        origins.extend([
+            "http://localhost",
+            "http://127.0.0.1",
+        ])
+    return origins
+
+
+def _is_localhost_origin(origin: str) -> bool:
+    return bool(re.match(
+        r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", origin
+    ))
+
+
+allowed_origins = _build_cors_origins(settings)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+    if settings.cors_allow_all_localhost else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,6 +92,9 @@ app.include_router(events_router, prefix=settings.api_prefix)
 app.include_router(users_router, prefix=settings.api_prefix)
 app.include_router(profile_router, prefix=settings.api_prefix)
 app.include_router(media_router, prefix=settings.api_prefix)
+app.include_router(admins_router, prefix=settings.api_prefix)
+app.include_router(chat_router)   # prefix already set to /api/v1/chat in the router
+app.include_router(ws_router)     # WebSocket: /ws/chat/{conversation_id}
 
 storage_provider = os.environ.get("STORAGE_PROVIDER", "local").lower()
 if storage_provider == "local":

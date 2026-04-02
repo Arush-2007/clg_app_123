@@ -1,3 +1,4 @@
+import 'package:college_app/pages/auth/auth_gate.dart';
 import 'package:college_app/pages/auth/login_post_email.dart';
 import 'package:college_app/pages/auth/login.dart';
 import 'package:college_app/services/auth_methods.dart';
@@ -77,6 +78,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     try {
       final result = await AuthMethods().signUpUserWithGoogle();
       showSnackBar(result.message);
+      if (result.isBackendSynced) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AuthGate()),
+        );
+      }
     } catch (e) {
       showSnackBar('Google sign-in failed: $e');
     }

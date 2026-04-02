@@ -21,12 +21,39 @@ class AuthGate extends StatelessWidget {
       return const LoginScreen();
     }
 
-    try {
-      final hasProfile = await AuthMethods().hasProfile(token: token);
-      return hasProfile ? const Bottombar() : const ProfileSetupScreen();
-    } catch (_) {
-      return const ProfileSetupScreen();
+    int attempts = 0;
+    while (attempts < 3) {
+      try {
+        final hasProfile = await AuthMethods().hasProfile(token: token);
+        return hasProfile ? const Bottombar() : const ProfileSetupScreen();
+      } catch (_) {
+        attempts++;
+        if (attempts < 3) {
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
     }
+    // All 3 attempts failed — show error screen, not profile setup
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Could not connect to server.",
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () async {
+                await AuthMethods().signOut();
+              },
+              child: const Text("Sign Out and Retry"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

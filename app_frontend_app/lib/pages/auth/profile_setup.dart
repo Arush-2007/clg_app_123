@@ -75,20 +75,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     setState(() => isLoading = true);
 
-    // attaching location to profile
+    // attaching location to profile — never block submit on location failure
     try {
       location = await Location().getCoordinatesAndSave();
-      if (location.containsKey('error')) {
-        _showSnackBar(location['error']!, isError: true);
-        setState(() => isLoading = false);
-        return;
-      }
-    } catch (e) {
-      _showSnackBar("Error fetching location: $e", isError: true);
-      setState(() => isLoading = false);
-      return;
+    } catch (_) {
+      // location failed silently — continue with submit
+      location = {};
     }
-  
+    if (location.containsKey('error')) {
+      location = {};
+    }
 
     final token = await user.getIdToken();
     if (token == null) {

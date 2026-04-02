@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:college_app/config/api_config.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -38,6 +39,24 @@ class SignInResult {
 class AuthMethods {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  static Future<void> printIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final token = await user.getIdToken(true);
+      debugPrint('==== FIREBASE TOKEN ====');
+      debugPrint(token);
+      debugPrint('========================');
+    } else {
+      debugPrint('No user logged in');
+    }
+  }
+
+  static Future<String?> getIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return await user.getIdToken(true);
+  }
 
   Future<bool> _syncUserWithBackend({
     required String token,

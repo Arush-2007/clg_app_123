@@ -24,12 +24,17 @@ class Settings(BaseSettings):
 
     firebase_project_id: str | None = None
     firebase_credentials_json: str | None = None
+    google_application_credentials: str | None = None
 
-    cors_origins: List[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: List[str] = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
+    cors_allow_all_localhost: bool = True
     rate_limit_per_minute: int = 120
     upload_dir: str = "uploads"
     protect_metrics: bool = True
     metrics_token: str = "change-me"
+    admin_seed_secret: str = "change-me"
 
     model_config = SettingsConfigDict(
         env_file=".env",
